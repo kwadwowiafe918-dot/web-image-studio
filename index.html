@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PhotoShop HTML5</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Custom scrollbars and slider styling */
+        input[type="range"] {
+            accent-color: #6366f1;
+        }
+        .checkerboard {
+            background-image: linear-gradient(45deg, #1f2937 25%, transparent 25%), 
+                              linear-gradient(-45deg, #1f2937 25%, transparent 25%), 
+                              linear-gradient(45deg, transparent 75%, #1f2937 75%), 
+                              linear-gradient(-45deg, transparent 75%, #1f2937 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+            background-color: #111827;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1f2937;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #4b5563;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #6b7280;
+        }
+    </style>
+</head>
+<body class="h-full bg-gray-950 text-gray-100 flex flex-col overflow-hidden font-sans select-none">
+
+    <!-- Top Navigation Bar -->
+    <header class="bg-gray-900 border-b border-gray-800 h-14 flex items-center justify-between px-4 z-20 shrink-0">
+        <div class="flex items-center space-x-3">
+            <div class="bg-indigo-600 text-white p-2 rounded-lg font-bold flex items-center justify-center shadow-lg shadow-indigo-600/30">
+                <i class="fa-solid fa-wand-magic-sparkles"></i>
+            </div>
+            <div>
+                <h1 class="font-bold text-sm tracking-wide text-white">PhotoShop HTML5</h1>
+                <p class="text-[10px] text-gray-400">Web Image Studio</p>
+            </div>
+        </div>
+
+        <!-- Quick File Controls -->
+        <div class="flex items-center space-x-2">
+            <button onclick="document.getElementById('file-input').click()" class="bg-gray-800 hover:bg-gray-700 text-gray-200 text-xs font-medium px-3 py-1.5 rounded-md transition flex items-center space-x-1.5 border border-gray-700">
+                <i class="fa-solid fa-folder-open text-indigo-400"></i>
+                <span>Open</span>
+            </button>
+            <input type="file" id="file-input" accept="image/*" class="hidden">
+
+            <button id="btn-save" onclick="saveImage()" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold px-3.5 py-1.5 rounded-md transition flex items-center space-x-1.5 shadow-md shadow-indigo-600/20 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                <i class="fa-solid fa-download"></i>
+                <span>Export</span>
+            </button>
+
+            <div class="h-5 w-[1px] bg-gray-800 mx-1"></div>
+
+            <button onclick="undo()" id="btn-undo" title="Undo (Ctrl+Z)" class="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-md transition disabled:opacity-35 disabled:cursor-not-allowed" disabled>
+                <i class="fa-solid fa-rotate-left text-sm"></i>
+            </button>
+            <button onclick="redo()" id="btn-redo" title="Redo (Ctrl+Y)" class="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-md transition disabled:opacity-35 disabled:cursor-not-allowed" disabled>
+                <i class="fa-solid fa-rotate-right text-sm"></i>
+            </button>
+            <button onclick="resetImage()" id="btn-reset" title="Reset All" class="p-2 text-gray-400 hover:text-rose-400 hover:bg-gray-800 rounded-md transition disabled:opacity-35 disabled:cursor-not-allowed" disabled>
+                <i class="fa-solid fa-arrow-rotate-left text-sm"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <div class="flex-1 flex overflow-hidden relative">
+
+        <!-- Left Toolbar (Tools) -->
+        <aside class="w-16 bg-gray-900 border-r border-gray-800 flex flex-col items-center py-3 space-y-2 z-10 shrink-0">
+            <button onclick="setTool('select')" id="tool-select" title="Move / Pan" class="tool-btn w-10 h-10 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-800 hover:text-white transition bg-indigo-600/20 text-indigo-400 border border-indigo-500/30">
+                <i class="fa-solid fa-hand text-sm"></i>
+            </button>
+            <button onclick="setTool('crop')" id="tool-crop" title="Crop Tool" class="tool-btn w-10 h-10 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-800 hover:text-white transition">
+                <i class="fa-solid fa-crop text-sm"></i>
+            </button>
+            <button onclick="setTool('brush')" id="tool-brush" title="Paintbrush" class="tool-btn w-10 h-10 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-800 hover:text-white transition">
+                <i class="fa-solid fa-paintbrush text-sm"></i>
+            </button>
+            <button onclick="setTool('text')" id="tool-text" title="Add Text" class="tool-btn w-10 h-10 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-800 hover:text-white transition">
+                <i class="fa-solid fa-font text-sm"></i>
+            </button>
+
+            <div class="w-8 h-[1px] bg-gray-800 my-1"></div>
+
+            <button onclick="applyFilterPreset('grayscale')" title="Grayscale Filter" class="w-10 h-10 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-800 hover:text-white transition">
+                <i class="fa-solid fa-circle-half-stroke text-sm"></i>
+            </button>
+            <button onclick="applyFilterPreset('sepia')" title="Sepia Filter" class="w-10 h-10 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-800 hover:text-white transition">
+                <i class="fa-solid fa-image text-sm text-amber-500"></i>
+            </button>
+            <button onclick="applyFilterPreset('invert')" title="Invert Colors" class="w-10 h-10 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-800 hover:text-white transition">
+                <i class="fa-solid fa-circle-nodes text-sm text-cyan-400"></i>
+            </button>
+        </aside>
+
+        <!-- Canvas Stage Area -->
+        <main class="flex-1 relative checkerboard flex items-center justify-center overflow-hidden" id="stage-container">
+            <!-- Empty State Prompt -->
+            <div id="empty-state" class="absolute inset-0 flex flex-col items-center justify-center p-6 text-center z-10 bg-gray-950/80 backdrop-blur-sm transition-opacity duration-300">
+                <div class="w-20 h-20 bg-indigo-600/10 border border-indigo-500/20 rounded-2xl flex items-center justify-center text-indigo-400 mb-4 text-2xl shadow-inner">
+                    <i class="fa-solid fa-cloud-arrow-up animate-bounce"></i>
+                </div>
+                <h3 class="text-lg font-semibold text-gray-200 mb-1">No Image Loaded</h3>
+                <p class="text-xs text-gray-400 max-w-sm mb-5">Drag and drop an image anywhere here, or click the button below to start editing.</p>
+                <button onclick="document.getElementById('file-input').click()" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold px-5 py-2.5 rounded-lg shadow-lg shadow-indigo-600/30 transition flex items-center space-x-2">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>Choose an Image</span>
+                </button>
+            </div>
+
+            <!-- Canvas Wrapper for Zoom & Pan -->
+            <div id="canvas-wrapper" class="relative shadow-2xl transition-transform duration-75 origin-center cursor-grab active:cursor-grabbing">
+                <canvas id="canvas" class="block max-w-none shadow-2xl rounded-sm"></canvas>
+            </div>
+
+            <!-- Floating Zoom/View Controls -->
+            <div class="absolute bottom-4 left-4 bg-gray-900/90 border border-gray-800 backdrop-blur rounded-lg px-3 py-1.5 flex items-center space-x-3 text-xs text-gray-300 shadow-xl z-20">
+                <button onclick="zoomOut()" title="Zoom Out" class="hover:text-white transition"><i class="fa-solid fa-magnifying-glass-minus"></i></button>
+                <span id="zoom-level" class="font-mono w-12 text-center">100%</span>
+                <button onclick="zoomIn()" title="Zoom In" class="hover:text-white transition"><i class="fa-solid fa-magnifying-glass-plus"></i></button>
+                <div class="h-3 w-[1px] bg-gray-700"></div>
+                <button onclick="fitToScreen()" title="Fit to Screen" class="hover:text-white transition"><i class="fa-solid fa-expand"></i></button>
+            </div>
+        </main>
+
+        <!-- Right Sidebar (Adjustments, Filters, Layers) -->
+        <aside class="w-80 bg-gray-900 border-l border-gray-800 flex flex-col z-10 shrink-0">
+            <!-- Tabs Header -->
+            <div class="flex border-b border-gray-800 text-xs font-medium">
+                <button onclick="switchTab('adjust')" id="tab-adjust" class="flex-1 py-3 text-center border-b-2 border-indigo-500 text-white bg-gray-800/40 transition">Adjustments</button>
+                <button onclick="switchTab('filters')" id="tab-filters" class="flex-1 py-3 text-center border-b-2 border-transparent text-gray-400 hover:text-gray-200 transition">Filters</button>
+                <button onclick="switchTab('transform')" id="tab-transform" class="flex-1 py-3 text-center border-b-2 border-transparent text-gray-400 hover:text-gray-200 transition">Transform</button>
+            </div>
+
+            <!-- Tab Contents Container -->
+            <div class="flex-1 overflow-y-auto p-4 space-y-6">
+
+                <!-- Adjustments Tab -->
+                <div id="panel-adjust" class="space-y-5">
+                    <div class="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Basic Adjustments</div>
+
+                    <!-- Brightness -->
+                    <div class="space-y-1.5">
+                        <div class="flex justify-between text-xs">
+                            <span class="text-gray-300 flex items-center space-x-1.5"><i class="fa-solid fa-sun w-4 text-indigo-400"></i><span>Brightness</span></span>
+                            <span id="val-brightness" class="font-mono text-gray-400">0</span>
+                        </div>
+                        <input type="range" id="range-brightness" min="-100" max="100" value="0" oninput="queueAdjustment()" class="w-full bg-gray-800 h-1.5 rounded-lg appearance-none cursor-pointer">
+                    </div>
+
+                    <!-- Contrast -->
+                    <div class="space-y-1.5">
+                        <div class="flex justify-between text-xs">
+                            <span class="text-gray-300 flex items-center space-x-1.5"><i class="fa-solid fa-circle-half-stroke w-4 text-indigo-400"></i><span>Contrast</span></span>
+                            <span id="val-contrast" class="font-mono text-gray-400">0</span>
+                        </div>
+                        <input type="range" id="range-contrast" min="-100" max="100" value="0" oninput="queueAdjustment()" class="w-full bg-gray-800 h-1.5 rounded-lg appearance-none cursor-pointer">
+                    </div>
+
+                    <!-- Saturation -->
+                    <div class="space-y-1.5">
+                        <div class="flex justify-between text-xs">
+                            <span class="text-gray-300 flex items-center space-x-1.5"><i class="fa-solid fa-droplet w-4 text-indigo-400"></i><span>Saturation</span></span>
+                            <span id="val-saturation" class="font-mono text-gray-400">0</span>
+                        </div>
+                        <input type="range" id="range-saturation" min="-100" max="100" value="0" oninput="queueAdjustment()" class="w-full bg-gray-800 h-1.5 rounded-lg appearance-none cursor-pointer">
+                    </div>
+
+                    <!-- Exposure -->
+                    <div class="space-y-1.5">
+                        <div class="flex justify-between text-xs">
+                            <span class="text-gray-300 flex items-center space-x-1.5"><i class="fa-solid fa-bolt w-4 text-indigo-400"></i><span>Exposure</span></span>
+                            <span id="val-exposure" class="font-mono text-gray-400">0</span>
+                        </div>
+                        <input type="range" id="range-exposure" min="-100" max="100" value="0" oninput="queueAdjustment()" class="w-full bg-gray-800 h-1.5 rounded-lg appearance-none cursor-pointer">
+                    </div>
+
+                    <!-- Blur -->
+                    <div class="space-y-1.5">
+                        <div class="flex justify-between text-xs">
+                            <span class="text-gray-300 flex items-center space-x-1.5"><i class="fa-solid fa-water w-4 text-indigo-400"></i><span>Blur</span></span>
+                            <span id="val-blur" class="font-mono text-gray-400">0px</span>
+                        </div>
+                        <input type="range" id="range-blur" min="0" max="20" value="0" oninput="queueAdjustment()" class="w-full bg-gray-800 h-1.5 rounded-lg appearance-none cursor-pointer">
+                    </div>
+
+                    <div class="pt-2">
+                        <button onclick="resetAdjustments()" class="w-full bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs py-2 rounded-lg transition border border-gray-700 font-medium">Reset Adjustments</button>
+                    </div>
+                </div>
+
+                <!-- Filters Tab -->
+                <div id="panel-filters" class="space-y-3 hidden">
+                    <div class="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Preset Filters</div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="applyFilterPreset('normal')" class="bg-gray-800 hover:bg-gray-700 p-3 rounded-lg border border-gray-700 text-left transition group">
+                            <div class="text-xs font-semibold text-white group-hover:text-indigo-400">Normal</div>
+                            <div class="text-[10px] text-gray-400">Original look</div>
+                        </button>
+                        <button onclick="applyFilterPreset('grayscale')" class="bg-gray-800 hover:bg-gray-700 p-3 rounded-lg border border-gray-700 text-left transition group">
+                            <div class="text-xs font-semibold text-white group-hover:text-indigo-400">Grayscale</div>
+                            <div class="text-[10px] text-gray-400">Classic B&W</div>
+                        </button>
+                        <button onclick="applyFilterPreset('sepia')" class="bg-gray-800 hover:bg-gray-700 p-3 rounded-lg border border-gray-700 text-left transition group">
+                            <div class="text-xs font-semibold text-white group-hover:text-indigo-400">Sepia</div>
+                            <div class="text-[10px] text-gray-400">Warm vintage</div>
+                        </button>
+                        <button onclick="applyFilterPreset('invert')" class="bg-gray-800 hover:bg-gray-700 p-3 rounded-lg border border-gray-700 text-left transition group">
+                            <div class="text-xs font-semibold text-white group-hover:text-indigo-400">Invert</div>
+                            <div class="text-[10px] text-gray-400">Negative colors</div>
+                        </button>
+                        <button onclick="applyFilterPreset('vintage')" class="bg-gray-800 hover:bg-gray-700 p-3 rounded-lg border border-gray-700 text-left transition group">
+                            <div class="text-xs font-semibold text-white group-hover:text-indigo-400">Vintage</div>
+                            <div class="text-[10px] text-gray-400">Faded warmth</div>
+                        </button>
+                        <button onclick="applyFilterPreset('punchy')" class="bg-gray-800 hover:bg-gray-700 p-3 rounded-lg border border-gray-700 text-left transition group">
+                            <div class="text-xs font-semibold text-white group-hover:text-indigo-400">Punchy</div>
+                            <div class="text-[10px] text-gray-400">High contrast</div>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Transform Tab -->
+                <div id="panel-transform" class="space-y-4 hidden">
+                    <div class="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Rotate & Flip</div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="rotateImage(90)" class="bg-gray-800 hover:bg-gray-700 text-gray-200 text-xs py-2.5 px-3 rounded-lg transition flex items-center justify-center space-x-2 border border-gray-700">
+                            <i class="fa-solid fa-rotate-right text-indigo-400"></i>
+                            <span>Rotate 90°</span>
+                        </button>
+                        <button onclick="rotateImage(-90)" class="bg-gray-800 hover:bg-gray-700 text-gray-200 text-xs py-2.5 px-3 rounded-lg transition flex items-center justify-center space-x-2 border border-gray-700">
+                            <i class="fa-solid fa-rotate-left text-indigo-400"></i>
+                            <span>Rotate -90°</span>
+                        </button>
+                        <button onclick="flipImage('horizontal')" class="bg-gray-800 hover:bg-gray-700 text-gray-200 text-xs py-2.5 px-3 rounded-lg transition flex items-center justify-center space-x-2 border border-gray-700">
+                            <i class="fa-solid fa-arrows-left-right text-indigo-400"></i>
+                            <span>Flip H</span>
+                        </button>
+                        <button onclick="flipImage('vertical')" class="bg-gray-800 hover:bg-gray-700 text-gray-200 text-xs py-2.5 px-3 rounded-lg transition flex items-center justify-center space-x-2 border border-gray-700">
+                            <i class="fa-solid fa-arrows-up-down text-indigo-400"></i>
+                            <span>Flip V</span>
+                        </button>
+                    </div>
+
+                    <div class="pt-4 border-t border-gray-800">
+                        <div class="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Image Dimensions</div>
+                        <div class="bg-gray-950 p-3 rounded-lg border border-gray-800 space-y-2 text-xs text-gray-400">
+                            <div class="flex justify-between">
+                                <span>Width:</span>
+                                <span id="info-width" class="font-mono text-white">0 px</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Height:</span>
+                                <span id="info-height" class="font-mono text-white">0 px</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Tool Options Sub-panel (Dynamic depending on active tool) -->
+            <div id="tool-options-container" class="bg-gray-950 border-t border-gray-800 p-4 hidden">
+                <!-- Brush Options -->
+                <div id="options-brush" class="space-y-3 hidden">
+                    <div class="flex justify-between text-xs">
+                        <span class="text-gray-300">Brush Size</span>
+                        <span id="val-brush-size" class="font-mono text-gray-400">12px</span>
+                    </div>
+                    <input type="range" id="range-brush-size" min="1" max="100" value="12" oninput="updateBrushSize(this.value)" class="w-full bg-gray-800 h-1.5 rounded-lg appearance-none cursor-pointer">
+                    
+                    <div class="flex items-center justify-between pt-1">
+                        <span class="text-xs text-gray-300">Color</span>
+                        <input type="color" id="brush-color" value="#6366f1" class="w-8 h-8 rounded bg-transparent cursor-pointer border border-gray-700">
+                    </div>
+                </div>
+
+                <!-- Text Options -->
+                <div id="options-text" class="space-y-3 hidden">
+                    <div class="space-y-1">
+                        <label class="text-[11px] text-gray-400">Text Content</label>
+                        <input type="text" id="text-input-content" value="Sample Text" class="w-full bg-gray-900 border border-gray-700 rounded px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-indigo-500">
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="text-[11px] text-gray-400">Font Size</label>
+                            <input type="number" id="text-input-size" value="32" min="8" max="150" class="w-full bg-gray-900 border border-gray-700 rounded px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-indigo-500">
+                        </div>
+                        <div>
+                            <label class="text-[11px] text-gray-400">Color</label>
+                            <input type="color" id="text-input-color" value="#ffffff" class="w-full h-8 rounded bg-transparent cursor-pointer border border-gray-700 mt-0.5">
+                        </div>
+                    </div>
+                    <button onclick="addTextToCanvas()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold py-2 rounded transition shadow">Add Text to Image</button>
+                </div>
+
+                <!-- Crop Options -->
+                <div id="options-crop" class="space-y-3 hidden">
+                    <p class="text-xs text-gray-400">Click and drag over the image to define crop boundaries.</p>
+                    <div class="flex space-x-2">
+                        <button onclick="confirmCrop()" class="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold py-2 rounded transition">Apply Crop</button>
+                        <button onclick="cancelCrop()" class="flex-1 bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs font-semibold py-2 rounded transition">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+    </div>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const fileInput = document.getElementById('file-input');
+        const stageContainer = document.getElementById('stage-container');
+        const canvasWrapper = document.getElementById('canvas-wrapper');
+
+        // State variables
+        let img = new Image();
+        let isImageLoaded = false;
+        let currentTool = 'select';
+        let zoom = 1;
+        let panX = 0;
+        let panY = 0;
+        let isPanning = false;
+        let startPanX = 0;
+        let startPanY = 0;
+
+        // Undo/Redo History Stack
+        let history = [];
+        let historyStep = -1;
+
+        // Adjustments state
+        let adjustments = {
+            brightness: 0,
+            contrast: 0,
+            saturation: 0,
+            exposure: 0,
+            blur: 0
+        };
+
+        // Brush state
+        let isDrawing = false;
+        let brushSize = 12;
+        let brushColor = '#6366f1';
+        let lastX = 0;
+        let lastY = 0;
+
+        // Crop state
+        let isCropping = false;
+        let cropStartX = 0;
+        let cropStartY = 0;
+        let cropEndX = 0;
+        let cropEndY = 0;
+        let isDraggingCrop = false;
+
+        // Initialize drag & drop file opening
+        window.addEventListener('dragover', (e) => e.preventDefault());
+        window.addEventListener('drop', (e) => {
+            e.preventDefault();
+            if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                loadImageFromFile(e.dataTransfer.files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files && e.target.files[0]) {
+                loadImageFromFile(e.target.files[0]);
+            }
+        });
+
+        function loadImageFromFile(file) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                img.onload = () => {
+                    canvas.width = img.naturalWidth;
+                    canvas.height = img.naturalHeight;
+                    ctx.drawImage(img, 0, 0);
+                    isImageLoaded = true;
+                    
+                    document.getElementById('empty-state').classList.add('opacity-0', 'pointer-events-none');
+                    document.getElementById('btn-save').removeAttribute('disabled');
+                    document.getElementById('btn-reset').removeAttribute('disabled');
+                    
+                    // Update dimensions info
+                    document.getElementById('info-width').innerText = `${img.naturalWidth} px`;
+                    document.getElementById('info-height').innerText = `${img.naturalHeight} px`;
+
+                    fitToScreen();
+                    saveState();
+                };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // History Management
+        function saveState() {
+            historyStep++;
+            if (historyStep < history.length) {
+                history.length = historyStep;
+            }
+            history.push(canvas.toDataURL());
+            updateHistoryButtons();
+        }
+
+        function undo() {
+            if (historyStep > 0) {
+                historyStep--;
+                restoreStateFromHistory();
+            }
+        }
+
+        function redo() {
+            if (historyStep < history.length - 1) {
+                historyStep++;
+                restoreStateFromHistory();
+            }
+        }
+
+        function restoreStateFromHistory() {
+            const restoredImg = new Image();
+            restoredImg.onload = () => {
+                canvas.width = restoredImg.naturalWidth;
+                canvas.height = restoredImg.naturalHeight;
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(restoredImg, 0, 0);
+                updateHistoryButtons();
+            };
+            restoredImg.src = history[historyStep];
+        }
+
+        function updateHistoryButtons() {
+            document.getElementById('btn-undo').disabled = historyStep <= 0;
+            document.getElementById('btn-redo').disabled = historyStep >= history.length - 1;
+        }
+
+        function resetImage() {
+            if (!isImageLoaded) return;
+            canvas.width = img.naturalWidth;
+            canvas.height = img.naturalHeight;
+            ctx.drawImage(img, 0, 0);
+            resetAdjustmentsValues();
+            saveState();
+        }
+
+        function resetAdjustmentsValues() {
+            adjustments = { brightness: 0, contrast: 0, saturation: 0, exposure: 0, blur: 0 };
+            document.getElementById('range-brightness').value = 0;
+            document.getElementById('val-brightness').innerText = '0';
+            document.getElementById('range-contrast').value = 0;
+            document.getElementById('val-contrast').innerText = '0';
+            document.getElementById('range-saturation').value = 0;
+            document.getElementById('val-saturation').innerText = '0';
+            document.getElementById('range-exposure').value = 0;
+            document.getElementById('val-exposure').innerText = '0';
+            document.getElementById('range-blur').value = 0;
+            document.getElementById('val
